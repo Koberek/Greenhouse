@@ -72,36 +72,43 @@ void controlHouseHeater(void){
 
 void waterPots(void){
 
+        
         // Check if NTP returned a valid time
     if (UTC_hours >= 24) {return;}  // 24 is an invalid UTC value. UTC_hours was init to 25 so nothing is done until a valid time received
                                     // so no action until after the first successful getNTPtime()
-
-        // check if UTC time matches first preset watering times
-    if ((UTC_hours == waterSchedule[0]) && (UTC_minutes == waterSchedule[1])){
-      waterON = true;
+                                   
+        // check if UTC time matches first preset watering time
+    if (waterON == false){          // check schedule if the waterON = false. If true then moving on..........
+      if ((UTC_hours == waterSchedule[firstWatering]) && (UTC_minutes == 0)){
+        waterON = true;
+        WATER_int = 120000;             // first watering 6am is for 2 minutes
+      }
     }
-        // check if UTC time matches second preset watering times
-    if ((UTC_hours == waterSchedule[2]) && (UTC_minutes == waterSchedule[3])){
-      waterON = true;
+        // check if UTC time matches second preset watering time
+    if (waterON == false){
+      if ((UTC_hours == waterSchedule[secondWatering]) && (UTC_minutes == 0)){
+        waterON = true;
+        WATER_int = 60000;              // second watering 2pm is for 1 minute
+      }
     }
     
-    if ((waterON == true) && (wateringON == false)){
-        wateringON = true;
+    if ((waterON == true) && (wateringON == false)){        //waterON if inside watering window 
+        wateringON = true;                                  // wateringON is true is watering is active
           digitalWrite(pot1pin, ON);
           digitalWrite(pot2pin, ON);
           digitalWrite(pot3pin, ON);
           digitalWrite(pot4pin, ON);
           digitalWrite(pot5pin, ON);
           
-        WATER_lastRead_millis = millis();
+        WATER_lastRead_millis = millis();                   // init the wateringON timer start value
       }
 
     if ((waterON == true) && (wateringON == true)){
       
-      bool endwatering = timer_lapsed(WATER);
+      bool endwatering = timer_lapsed(WATER);               // endwatering true is the watering time has expired
       if (endwatering == true){
-        waterON = false;
-        wateringON = false;
+        waterON = false;                                    // reset the waterON to false
+        wateringON = false;                                 // 
           digitalWrite(pot1pin, OFF);
           digitalWrite(pot2pin, OFF);
           digitalWrite(pot3pin, OFF);
@@ -139,7 +146,9 @@ void printData(void){
     Serial.println();
 }
 
-
+// These are the system timers. Using millis() function. Each timer has a NAME_int to define the length of time in ms.
+// if current time - start time >= whatever_int then {}
+// 
 bool timer_lapsed(uint8_t PID){                             // timer. used for short interval scheduling 1sec- a few minutes
   if (PID == NTP){
     if ((millis() - NTP_lastRead_millis) >= NTP_int){        // set to 5 sec
