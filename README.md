@@ -8,6 +8,6 @@ GreenHouseTesting.ino and FunctionTesting.ino are the Arduino files (used on Met
 UDP_Server.c is a test NTP server that I'm running on an RPi. Time returned is static, but the UDP packet size is correct. This is being used for testing instead of banging away at the NTP servers on the net. Don't care if the time is correct. Only need a reply packet. I didn't write this but I modified it too serve my purposes.
 Source https://www.geeksforgeeks.org/udp-server-client-implementation-c/
 
-FUTURE work is to add a timer and reduce the frequency of NTP calls to get time.
+FUTURE work is to add aother timer to keep track of current time to reduce the frequency of NTP calls to get time. RTC.
 
-FUTURE add a Web interface for displaying current envronment data (temp, humid, waterON, etc)
+FUTURE add a Web interface for displaying current envronment data (temp, humid, waterON, etc) instead of using serial monitor.
