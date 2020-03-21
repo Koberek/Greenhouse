@@ -6,6 +6,18 @@
 //************************************************************************************************************
 // CURRENT work>>
 
+// Program hangs after 3-5 days of operation.
+// Writing testing server on RPi so I can increase the frequency of NTP calls without reaching out to the national
+//  NTP servers. I want to increase the overall speed of my program to see if I can get it to lock up at a much
+//  shorter interval. 
+
+// NTP request data packet looks like this
+// E3 00 06 EC 00 00 00 00 00 00 00 00 31 4E 31 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+// NTP reply packet. 
+// 1C 01 0D E3 00 00 00 10 00 00 00 20 4E 49 53 54 E2 20 A8 E4 00 00 00 00 00 00 00 00 00 00 00 00 E2 20 A9 40 CE 24 FD 69 E2 20 A9 40 CE 25 11 83 
+
+
 
 //************************************************************************************************************
 // DESIRED function
@@ -38,7 +50,7 @@
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <SPI.h>
+//#include <SPI.h>
 #include <WiFiNINA.h>
 #include <WiFiUdp.h>
 
@@ -135,7 +147,7 @@ int keyIndex = 0;            // your network key Index number (needed only for W
 
 unsigned int localPort = 2390;      // local port to listen for UDP packets
 
-IPAddress timeServer(129, 6, 15, 28); // time.nist.gov NTP server (129, 6, 15, 28)
+IPAddress timeServer(192, 168, 1, 8); // Send NTP req packet to PC for testing. time.nist.gov NTP server (129, 6, 15, 28)
 
 const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
 
@@ -202,38 +214,37 @@ void setup() {
   WATER_lastRead_millis   = millis();
   LED_lastRead_millis     = millis();
 
-  // get first NTP packet
+  // get first NTP packet before loop(). 
   getNTPtime();
 
   // Start first temperature conversion
-  getTempsF();        // first call to get temperatures. Using this instead of delay(1000) since the getTempsF() takes almost 1 sec.
+  getTempsF();        // first call to get temperatures. Using this instead of delay(1000) since the getTempsF() takes ~ 1 sec.
 }
 
 void loop() {
   decodeTime();                       // check for NTP packet. IF  received then decode time
-
+    
   if (timer_lapsed(LED) == true) {
     digitalWrite(LEDpin, !digitalRead(LEDpin));     // toggles LED to indicate running program
   }
-
+  
   // get NTP time every 10 seconds
   if (timer_lapsed(NTP) == true) {    // get NTP time every NTP_int. Make sure to NOT send NTP requests too fast
     getNTPtime();
   }
-
+  
   waterPots();                        // checks time decoded by decodeTime() and waters pot if.......
 
   // get probe temps every 1 secconds
   if (timer_lapsed(PROBE) == true) {  // read temps every PROBE_int
     getTempsF();                      // This function take a LOT of time
   }
-
+  
   controlHouseVent();                 //  Vent if house too hot
   controlHouseHeater();               //  Heat if too cold
-
-  //receiveRPiData();                 // From RPi
-  //decodeRPiData();                  //
+ 
   if (timer_lapsed(PRINT) == true) {  // print Time and Temp data to Serial
-    printData();
+    //printData();
   }
+  
 }
