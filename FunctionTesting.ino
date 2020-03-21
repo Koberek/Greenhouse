@@ -151,14 +151,14 @@ void printData(void){
 // 
 bool timer_lapsed(uint8_t PID){                             // timer. used for short interval scheduling 1sec- a few minutes
   if (PID == NTP){
-    if ((millis() - NTP_lastRead_millis) >= NTP_int){        // set to 5 sec
+    if ((millis() - NTP_lastRead_millis) >= NTP_int){        // set to 10 sec
       NTP_lastRead_millis = millis();
       return true;
     }
     else {return false;}
     }
   if (PID == PROBE){
-    if ((millis() - PROBE_lastRead_millis) >= PROBE_int){    // set to 1 sec
+    if ((millis() - PROBE_lastRead_millis) >= PROBE_int){    // set to 10 sec
       PROBE_lastRead_millis = millis();
       return true;
     }
@@ -172,7 +172,7 @@ bool timer_lapsed(uint8_t PID){                             // timer. used for s
     else {return false;}
     }
   if (PID == PRINT){
-    if ((millis() - PRINT_lastRead_millis) >= PRINT_int){    // set to 5 sec
+    if ((millis() - PRINT_lastRead_millis) >= PRINT_int){    // set to 10 sec
       PRINT_lastRead_millis = millis();
       return true;
     }
@@ -296,7 +296,7 @@ unsigned long sendNTPpacket(IPAddress& address) {
 
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
-  Udp.beginPacket(address, 123); //NTP requests are to port 123
+  Udp.beginPacket(address, 8080); // 8080 for TESTING only...NTP requests are to port 123
   //Serial.println("4");
   Udp.write(packetBuffer, NTP_PACKET_SIZE);
   //Serial.println("5");

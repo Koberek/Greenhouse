@@ -11,6 +11,12 @@
 //  NTP servers. I want to increase the overall speed of my program to see if I can get it to lock up at a much
 //  shorter interval. 
 
+// RPi test server ./UDP_Server
+
+// changed NTP interval from 10 sec to .1  !!!!!!
+// changed IPAddress timeServer(129, 6, 15, 28);
+// changed Udp.beginPacket(address, 123);  to port 8080 for testing
+
 // NTP request data packet looks like this
 // E3 00 06 EC 00 00 00 00 00 00 00 00 31 4E 31 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
@@ -72,15 +78,15 @@
 
 // for the timer and time
 #define NTP   0x00
-unsigned long NTP_int   = 10000;             // 10 sec. DO NOT call this function at > 1 call/3 sec or faster. Will get banned from site
+unsigned long NTP_int   = 100;             //  !!!  Change this number !!!  10 sec. DO NOT call this function at > 1 call/3 sec or faster. Will get banned from site
 #define PROBE 0x01
-unsigned long PROBE_int = 10000;            // 1 minute read temp interval
+unsigned long PROBE_int = 1000;            // 1 minute read temp interval
 #define PRINT 0x02
-unsigned long PRINT_int = 10000;            // 10 sec print
+unsigned long PRINT_int = 50;            // 10 sec print
 #define WATER 0x03
 unsigned long WATER_int = 120000;           // 2 minute watering timer. Water ON for 2 minutes
 #define LED   0x04
-unsigned long LED_int   = 100;              // Only indicates prgram running
+unsigned long LED_int   = 1000;              // Only indicates prgram running
 
 // init the timers
 unsigned long NTP_lastRead_millis;
@@ -145,9 +151,9 @@ char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
-unsigned int localPort = 2390;      // local port to listen for UDP packets
+unsigned int localPort = 2390;      // 2390 local port to listen for UDP packets
 
-IPAddress timeServer(192, 168, 1, 8); // Send NTP req packet to PC for testing. time.nist.gov NTP server (129, 6, 15, 28)
+IPAddress timeServer(192, 168, 1, 21); // Send NTP req packet to PC for testing. time.nist.gov NTP server (129, 6, 15, 28)
 
 const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
 
