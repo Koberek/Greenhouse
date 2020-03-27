@@ -40,11 +40,13 @@ void decodeRPiData(){
 
 
 void getTempsF(void){
+
   sensors.requestTemperatures();            // required before .getTempX()
   for (int i=0; i<9; i++){                  // read all 8 temp sensors. Order of reading is fixed by DallasTemperature so be aware
   float temp = sensors.getTempF(probeAddr[i]);
   greenHouseTemperatures[i] = (int) temp;   // convert from float to int and store to greenHouseTemperature[]
   }
+
 }
 
 void controlHouseVent(void){
@@ -179,9 +181,9 @@ bool timer_lapsed(uint8_t PID){                             // timer. used for s
     else {return false;}
     }
 
-  if (PID == LED){
-    if ((millis() - LED_lastRead_millis) >= LED_int){        // set to .5 sec
-      LED_lastRead_millis = millis();
+  if (PID == RUNNING){
+    if ((millis() - RUNNING_lastRead_millis) >= RUNNING_int){        // set to .5 sec
+      RUNNING_lastRead_millis = millis();
       return true;
     }
     else {return false;}
@@ -214,9 +216,9 @@ void getNTPtime(void){
 }
 
 void decodeTime(void ){
-  // wait to see if a reply is available
-  //delay(1000);
-  if (Udp.parsePacket()) {
+  
+  if (Udp.parsePacket()) {    // if UDP packet available
+    //digitalWrite(runPin, HIGH);
     //Serial.println("packet received");
     // We've received a packet, read the data from it
     Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
@@ -238,13 +240,7 @@ void decodeTime(void ){
     const unsigned long seventyYears = 2208988800UL;
     // subtract seventy years:
     unsigned long epoch = secsSince1900 - seventyYears;
-    // print Unix time:
-    //Serial.println(epoch);
 
-
-    // print the hour, minute and second:
-    //Serial.println();
-    //Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
     UTC_hours = ((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
         // convert UTC_hours to local time (24h)
         // This is for DST (UTC - 5) and Central Time
@@ -252,30 +248,19 @@ void decodeTime(void ){
       UTC_hours = (UTC_hours - 5);
     }
     else UTC_hours = (UTC_hours + 19);
-    
-    //Serial.print(UTC_hours);
-    //Serial.print(':');
-    //if (((epoch % 3600) / 60) < 10) {
-      // In the first 10 minutes of each hour, we'll want a leading '0'
-      //Serial.print('0');
-    //}
+
     UTC_minutes = ((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
-    //Serial.println(UTC_minutes);
-    //Serial.println("");         // Add another CR
-    // Cut off the rest of this function since I don't need seconds
-    //Serial.print(':');
-    //if ((epoch % 60) < 10) {
-      // In the first 10 seconds of each minute, we'll want a leading '0'
-      //Serial.print('0');
-    //}
-    //Serial.println(epoch % 60); // print the second
+
+    //digitalWrite(runPin, LOW);
   }
   // wait ten seconds before asking for the time again
-  //delay(10000);  
+  //delay(10000);
+
 }
 
 // send an NTP request to the time server at the given address
 unsigned long sendNTPpacket(IPAddress& address) {
+
   //Serial.println("1");
   // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
@@ -296,12 +281,13 @@ unsigned long sendNTPpacket(IPAddress& address) {
 
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
-  Udp.beginPacket(address, 8080); // 8080 for TESTING only...NTP requests are to port 123
+  Udp.beginPacket(address, 123); // 8080 for TESTING only...NTP requests are to port 123
   //Serial.println("4");
   Udp.write(packetBuffer, NTP_PACKET_SIZE);
   //Serial.println("5");
   Udp.endPacket();
   //Serial.println("6");
+
 }
 
 // CRC8 function for Arduino (c++)

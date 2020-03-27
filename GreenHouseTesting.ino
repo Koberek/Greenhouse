@@ -6,15 +6,18 @@
 //************************************************************************************************************
 // CURRENT work>>
 
-// Program hangs after 3-5 days of operation.
-// Writing testing server on RPi so I can increase the frequency of NTP calls without reaching out to the national
+// Moved LED toggle to the getTempsF().
+
+// Only function that isn't active is waterPots(); I may have a condition that doesn't allow the function to exit
+
+// Wrote testing server on RPi so I can increase the frequency of NTP calls without reaching out to the national
 //  NTP servers. I want to increase the overall speed of my program to see if I can get it to lock up at a much
 //  shorter interval. 
 
 // RPi test server ./UDP_Server
 
 // changed NTP interval from 10 sec to .1  !!!!!!
-// changed IPAddress timeServer(129, 6, 15, 28);
+// changed IPAddress timeServer(129, 6, 15, 28); to local IP test server
 // changed Udp.beginPacket(address, 123);  to port 8080 for testing
 
 // NTP request data packet looks like this
@@ -69,6 +72,7 @@
 #define pot3pin   A2
 #define pot4pin   A3
 #define pot5pin   A4
+#define runPin    A5
 #define ventPin   3                   // digital pin 3
 #define heaterPin 4                   // digital pin 4
 #define LEDpin    13
@@ -78,36 +82,36 @@
 
 // for the timer and time
 #define NTP   0x00
-unsigned long NTP_int   = 100;             //  !!!  Change this number !!!  10 sec. DO NOT call this function at > 1 call/3 sec or faster. Will get banned from site
+unsigned long NTP_int   = 5000;             // 10 sec. DO NOT call this function at > 1 call/3 sec or faster. Will get banned from site
 #define PROBE 0x01
-unsigned long PROBE_int = 1000;            // 1 minute read temp interval
+unsigned long PROBE_int = 60000;            // 1 minute read temp interval
 #define PRINT 0x02
-unsigned long PRINT_int = 50;            // 10 sec print
+unsigned long PRINT_int = 2000;            // 2 sec print interval
 #define WATER 0x03
 unsigned long WATER_int = 120000;           // 2 minute watering timer. Water ON for 2 minutes
-#define LED   0x04
-unsigned long LED_int   = 1000;              // Only indicates prgram running
+#define RUNNING   0x04
+unsigned long RUNNING_int   = 250;              // LED toggle only indicates prgram running
 
-// init the timers
-unsigned long NTP_lastRead_millis;
+// init the timers                       
+unsigned long NTP_lastRead_millis;        // These are used in timer_lapsed() function
 unsigned long PROBE_lastRead_millis;
 unsigned long PRINT_lastRead_millis;
 unsigned long WATER_lastRead_millis;
-unsigned long LED_lastRead_millis;
+unsigned long RUNNING_lastRead_millis;
 
 // Variables to hold current time from decodeTime()
-int UTC_hours   = 25;                    // init to 25 so the first watering doesn't happen until the getNTPtime() runs for the first time
-int UTC_minutes = 65;                    // basically the same as above
+int UTC_hours   = 25;                    // init to 25 to prevent actions until a valid NTP time is received. 25 is invalid time.
+int UTC_minutes = 65;                    // same as above
 int UTC_seconds = 0;                     //
 
 
 int waterSchedule[]   {6, 14};           // 24 hour clock. 6am and 2pm. Minutes are always 0 in waterPots()
 int firstWatering   = 0;                 // index to waterSchedule[]
 int secondWatering  = 1;
-bool wateringON     = false;             // true if watering is active
-bool waterON        = false;             // true if time for watering
+bool wateringON     = false;             // true if watering is active... i.e. water valves are open
+bool waterON        = false;             // true if it is time to water
 
-bool  crcFAIL = false;
+bool  crcFAIL = false;                  // CRC used in serial communication with RPi.  NOT USED currently
 
 
 const int houseHeatOnTemp   = 40;
@@ -126,7 +130,7 @@ uint8_t   calcCRC;                                      // calculated CRC8 of th
 OneWire oneWire(ONE_WIRE_BUS);            // create OneWire instance on pin2
 DallasTemperature sensors(&oneWire);      // pass onewire instance to Dallas
 
-// These are the ID's of the 5-probe temperature probe assembly (pre-made assembly  fixed addresses) and 3 extra probes
+// These are the ID's of the 5-probe temperature probe assembly (pre-made assembly  fixed addresses) and 4 extra probes
 DeviceAddress probe1 = { 0x28, 0xFF, 0xC3, 0x0D, 0x81, 0x14, 0x02, 0x1B };
 DeviceAddress probe2 = { 0x28, 0xFF, 0x7D, 0x65, 0x81, 0x14, 0x02, 0x7A };
 DeviceAddress probe3 = { 0x28, 0xFF, 0xD2, 0x5C, 0x30, 0x17, 0x04, 0x62 };
@@ -153,7 +157,8 @@ int keyIndex = 0;            // your network key Index number (needed only for W
 
 unsigned int localPort = 2390;      // 2390 local port to listen for UDP packets
 
-IPAddress timeServer(192, 168, 1, 21); // Send NTP req packet to PC for testing. time.nist.gov NTP server (129, 6, 15, 28)
+IPAddress testServer(192, 168, 1, 2); // Send NTP req packet to PC for testing. Changed from time.nist.gov NTP server (129, 6, 15, 28)
+IPAddress timeServer(129, 6, 15, 28);   // NTP timer server address
 
 const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
 
@@ -177,12 +182,14 @@ void setup() {
   digitalWrite(pot4pin, OFF);
   pinMode(pot5pin, OUTPUT);                   // pin A4
   digitalWrite(pot5pin, OFF);
+  pinMode(runPin, OUTPUT);                    // Pin to indicate that the prgram is running
+  digitalWrite(runPin, LOW);
   pinMode(ventPin, OUTPUT);                   // pin 3
   digitalWrite(ventPin, OFF);
   pinMode(heaterPin, OUTPUT);                 // pin 4
   digitalWrite(heaterPin, OFF);
   pinMode(LEDpin, OUTPUT);                    // indicates program running
-  digitalWrite(LEDpin, OFF);
+  digitalWrite(LEDpin, LOW);
 
   sensors.begin();    // Start Dallas 18B20 on oneWire
 
@@ -214,11 +221,12 @@ void setup() {
   Udp.begin(localPort);
 
   // init the timers. used to schedule function calls at interval
-  NTP_lastRead_millis     = millis();
-  PROBE_lastRead_millis   = millis();
-  PRINT_lastRead_millis   = millis();
-  WATER_lastRead_millis   = millis();
-  LED_lastRead_millis     = millis();
+  // should be a better way to init the timers
+  NTP_lastRead_millis         = millis();
+  PROBE_lastRead_millis       = millis();
+  PRINT_lastRead_millis       = millis();
+  WATER_lastRead_millis       = millis();
+  RUNNING_lastRead_millis     = millis();
 
   // get first NTP packet before loop(). 
   getNTPtime();
@@ -228,29 +236,32 @@ void setup() {
 }
 
 void loop() {
-  decodeTime();                       // check for NTP packet. IF  received then decode time
-    
-  if (timer_lapsed(LED) == true) {
-    digitalWrite(LEDpin, !digitalRead(LEDpin));     // toggles LED to indicate running program
+
+  // TOGGLE the runn state LED
+  if (timer_lapsed(RUNNING) == true){
+    digitalWrite(runPin, !digitalRead(runPin));
   }
   
   // get NTP time every 10 seconds
   if (timer_lapsed(NTP) == true) {    // get NTP time every NTP_int. Make sure to NOT send NTP requests too fast
-    getNTPtime();
-  }
+    //digitalWrite(runPin, HIGH);
+    decodeTime();                       // check for NTP packet. IF  received then decode time
+    getNTPtime();                       // send request to get new NTP packet
+    //digitalWrite(runPin, LOW);
+}
   
   waterPots();                        // checks time decoded by decodeTime() and waters pot if.......
 
   // get probe temps every 1 secconds
   if (timer_lapsed(PROBE) == true) {  // read temps every PROBE_int
-    getTempsF();                      // This function take a LOT of time
+    getTempsF();                      // This function take a LOT of time.. 830ms !
   }
   
   controlHouseVent();                 //  Vent if house too hot
   controlHouseHeater();               //  Heat if too cold
  
   if (timer_lapsed(PRINT) == true) {  // print Time and Temp data to Serial
-    //printData();
+    printData();                    // This function hangs if
   }
-  
+
 }
