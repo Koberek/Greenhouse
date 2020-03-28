@@ -4,6 +4,14 @@
 // instead of breaking the perfectly good code already saved.
 
 //************************************************************************************************************
+// PINS>
+// 3,4    Heater (parallel circuit)
+// 6      Vent
+// A0-A4  Water pots 1-5
+// A5     RUN LED
+
+
+//*************************************************************************************************************
 // CURRENT work>>
 
 // Moved LED toggle to the getTempsF().
@@ -73,8 +81,9 @@
 #define pot4pin   A3
 #define pot5pin   A4
 #define runPin    A5
-#define ventPin   3                   // digital pin 3
-#define heaterPin 4                   // digital pin 4
+#define ventPin   6
+#define heatPin1  3
+#define heatPin2  4
 #define LEDpin    13
 
 #define OFF HIGH                          // Active LOW inputs on the external relay board
@@ -184,11 +193,13 @@ void setup() {
   digitalWrite(pot5pin, OFF);
   pinMode(runPin, OUTPUT);                    // Pin to indicate that the prgram is running
   digitalWrite(runPin, LOW);
-  pinMode(ventPin, OUTPUT);                   // pin 3
+  pinMode(ventPin, OUTPUT);                   // pin 6
   digitalWrite(ventPin, OFF);
-  pinMode(heaterPin, OUTPUT);                 // pin 4
-  digitalWrite(heaterPin, OFF);
-  pinMode(LEDpin, OUTPUT);                    // indicates program running
+  pinMode(heatPin1, OUTPUT);                 // pin 3
+  digitalWrite(heatPin1, OFF);
+  pinMode(heatPin2, OUTPUT);                 // pin 4
+  digitalWrite(heatPin2, OFF);
+  pinMode(LEDpin, OUTPUT);                    // pin 13
   digitalWrite(LEDpin, LOW);
 
   sensors.begin();    // Start Dallas 18B20 on oneWire

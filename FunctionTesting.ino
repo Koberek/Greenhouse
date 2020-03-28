@@ -52,7 +52,8 @@ void getTempsF(void){
 void controlHouseVent(void){
   int houseTemp   = greenHouseTemperatures[6];
   if (houseTemp >= houseVentOnTemp){
-    digitalWrite(heaterPin, OFF);
+    digitalWrite(heatPin1, OFF);
+    digitalWrite(heatPin2, OFF);
     digitalWrite(ventPin, ON);
   }
   if (houseTemp <= houseVentOffTemp){
@@ -64,10 +65,12 @@ void controlHouseHeater(void){
   int houseTemp   = greenHouseTemperatures[6];
   if (houseTemp <= houseHeatOnTemp){
     digitalWrite(ventPin, OFF);
-    digitalWrite(heaterPin, ON);
+    digitalWrite(heatPin1, ON);
+    digitalWrite(heatPin2, ON);
   }
   if (houseTemp >= houseHeatOffTemp){
-    digitalWrite(heaterPin, OFF);
+    digitalWrite(heatPin1, OFF);
+    digitalWrite(heatPin2, OFF);
   }
 }
 
