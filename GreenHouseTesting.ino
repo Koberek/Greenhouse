@@ -14,19 +14,6 @@
 //*************************************************************************************************************
 // CURRENT work>>
 
-// Moved LED toggle to the getTempsF().
-
-// Only function that isn't active is waterPots(); I may have a condition that doesn't allow the function to exit
-
-// Wrote testing server on RPi so I can increase the frequency of NTP calls without reaching out to the national
-//  NTP servers. I want to increase the overall speed of my program to see if I can get it to lock up at a much
-//  shorter interval. 
-
-// RPi test server ./UDP_Server
-
-// changed NTP interval from 10 sec to .1  !!!!!!
-// changed IPAddress timeServer(129, 6, 15, 28); to local IP test server
-// changed Udp.beginPacket(address, 123);  to port 8080 for testing
 
 // NTP request data packet looks like this
 // E3 00 06 EC 00 00 00 00 00 00 00 00 31 4E 31 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -91,7 +78,7 @@
 
 // for the timer and time
 #define NTP   0x00
-unsigned long NTP_int   = 5000;             // 10 sec. DO NOT call this function at > 1 call/3 sec or faster. Will get banned from site
+unsigned long NTP_int   = 10000;             // 10 sec. DO NOT call this function at > 1 call/3 sec or faster. Will get banned from site
 #define PROBE 0x01
 unsigned long PROBE_int = 60000;            // 1 minute read temp interval
 #define PRINT 0x02
@@ -250,7 +237,7 @@ void loop() {
 
   // TOGGLE the runn state LED
   if (timer_lapsed(RUNNING) == true){
-    digitalWrite(runPin, !digitalRead(runPin));
+    digitalWrite(LEDpin, !digitalRead(LEDpin));
   }
   
   // get NTP time every 10 seconds
