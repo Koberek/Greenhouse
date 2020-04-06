@@ -42,15 +42,16 @@ void decodeRPiData(){
 void getTempsF(void){
 
   sensors.requestTemperatures();            // required before .getTempX()
-  for (int i=0; i<9; i++){                  // read all 8 temp sensors. Order of reading is fixed by DallasTemperature so be aware
+  for (int i=0; i<9; i++){                  // read all 9 temp sensors. Order of reading is fixed by DallasTemperature so be aware
   float temp = sensors.getTempF(probeAddr[i]);
   greenHouseTemperatures[i] = (int) temp;   // convert from float to int and store to greenHouseTemperature[]
   }
 
 }
 
-void controlHouseVent(void){
-  int houseTemp   = greenHouseTemperatures[6];
+void controlHouseTemp(void){
+  int houseTemp   = greenHouseTemperatures[0];      // CHANGED from [6] to [0]
+  
   if (houseTemp >= houseVentOnTemp){
     digitalWrite(heatPin1, OFF);
     digitalWrite(heatPin2, OFF);
@@ -59,10 +60,7 @@ void controlHouseVent(void){
   if (houseTemp <= houseVentOffTemp){
     digitalWrite(ventPin, OFF);
   }
-}
 
-void controlHouseHeater(void){
-  int houseTemp   = greenHouseTemperatures[6];
   if (houseTemp <= houseHeatOnTemp){
     digitalWrite(ventPin, OFF);
     digitalWrite(heatPin1, ON);
@@ -293,6 +291,19 @@ unsigned long sendNTPpacket(IPAddress& address) {
 
 }
 
+void checkWiFi(void){
+
+  if (WiFi.status() == (WL_CONNECTION_LOST || WL_DISCONNECTED)){
+    Serial.println("WiFi Connection Lost...");
+    WiFi.disconnect();
+    while (status != WL_CONNECTED){
+      Serial.println("Connectingto Wifi");
+      WiFi.begin(ssid, pass);
+    }
+    Serial.print("Reconnected to  ");
+    Serial.println(ssid);
+  }
+}
 // CRC8 function for Arduino (c++)
 uint8_t crc8( uint8_t *addr, uint8_t len) {
       uint8_t crc=0;

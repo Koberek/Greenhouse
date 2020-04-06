@@ -82,7 +82,7 @@ unsigned long NTP_int   = 10000;             // 10 sec. DO NOT call this functio
 #define PROBE 0x01
 unsigned long PROBE_int = 60000;            // 1 minute read temp interval
 #define PRINT 0x02
-unsigned long PRINT_int = 2000;            // 2 sec print interval
+unsigned long PRINT_int = 60000;            // 1 minute print interval
 #define WATER 0x03
 unsigned long WATER_int = 120000;           // 2 minute watering timer. Water ON for 2 minutes
 #define RUNNING   0x04
@@ -110,10 +110,10 @@ bool waterON        = false;             // true if it is time to water
 bool  crcFAIL = false;                  // CRC used in serial communication with RPi.  NOT USED currently
 
 
-const int houseHeatOnTemp   = 40;
-const int houseHeatOffTemp  = 45;
-const int houseVentOffTemp  = 80;
-const int houseVentOnTemp   = 85;
+const int houseHeatOnTemp   = 45;
+const int houseHeatOffTemp  = 48;
+const int houseVentOffTemp  = 68;
+const int houseVentOnTemp   = 70;
 const int houseWARNTemp     = 90;
 
 // memory for communication from RPi
@@ -153,7 +153,7 @@ int keyIndex = 0;            // your network key Index number (needed only for W
 
 unsigned int localPort = 2390;      // 2390 local port to listen for UDP packets
 
-IPAddress testServer(192, 168, 1, 2); // Send NTP req packet to PC for testing. Changed from time.nist.gov NTP server (129, 6, 15, 28)
+//IPAddress testServer(192, 168, 1, 2); // Send NTP req packet to PC for testing. Changed from time.nist.gov NTP server (129, 6, 15, 28)
 IPAddress timeServer(129, 6, 15, 28);   // NTP timer server address
 
 const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
@@ -204,6 +204,10 @@ void setup() {
     Serial.println("Please upgrade the firmware");
   }
 
+  // Clear the connection of any WiFi. 
+  WiFi.disconnect();
+  delay(1000);
+
   // attempt to connect to Wifi network:
   while (status != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
@@ -241,25 +245,28 @@ void loop() {
   }
   
   // get NTP time every 10 seconds
-  if (timer_lapsed(NTP) == true) {    // get NTP time every NTP_int. Make sure to NOT send NTP requests too fast
-    //digitalWrite(runPin, HIGH);
-    decodeTime();                       // check for NTP packet. IF  received then decode time
+  if (timer_lapsed(NTP) == true) {      // get NTP time every NTP_int. Make sure to NOT send NTP requests too fast
+    decodeTime();                       // check and decode last received NTP packet
     getNTPtime();                       // send request to get new NTP packet
-    //digitalWrite(runPin, LOW);
-}
-  
-  waterPots();                        // checks time decoded by decodeTime() and waters pot if.......
+  }
 
   // get probe temps every 1 secconds
   if (timer_lapsed(PROBE) == true) {  // read temps every PROBE_int
-    getTempsF();                      // This function take a LOT of time.. 830ms !
+    getTempsF();                      // This function take a LOT of time.. 830ms ! with all 9 sensors attached
   }
   
-  controlHouseVent();                 //  Vent if house too hot
-  controlHouseHeater();               //  Heat if too cold
- 
-  if (timer_lapsed(PRINT) == true) {  // print Time and Temp data to Serial
-    printData();                    // This function hangs if
+  waterPots();                        // checks time decoded by decodeTime() and waters pot if.......
+  controlHouseTemp();                 //  Vent if house too hot
+
+  if (timer_lapsed(PRINT) == true) {  // print Time and Temp data to Serial for diagnostics
+    printData();                      //
   }
+
+  // Check WiFi status and reconnect IF disconnected AND watering is NOT active. Allow watering to finish before reconnecting
+  if ((waterON && wateringON) == false){
+    checkWiFi();                      // check to see if WiFi is still connected. Been having problems with connectivity
+  }                                   // IF WiFi is lost this function could hang the program if reconnect doesn't work
+                                      // Reconnect WiFi but only if watering isn't ON. Allow watering to finish.
+                                      // if watering is OFF then disable watering until the WiFi is reconnected.
 
 }
