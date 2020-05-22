@@ -428,6 +428,21 @@ bool timer_lapsed(uint8_t PID){                             // timer. used for s
     else {return false;}
   }
 
+  if (PID == FLUSH_water){
+    if ((millis() - FLUSH_lastRead_millis) >= FLUSH_water_int){    // set to 60sec
+      return true;
+    }
+    else {return false;}
+  }
+
+  if (PID == INHIBIT_flush){
+    if ((millis() - INHIBIT_flush_lastRead_millis) >= INHIBIT_flush_int){    // 2 hours
+      return true;
+    }
+    else {return false;}
+  }
+
+
   if (PID == PRINT){
     if ((millis() - PRINT_lastRead_millis) >= PRINT_int){    // set to 10 sec
       PRINT_lastRead_millis = millis();
