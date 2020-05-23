@@ -116,13 +116,13 @@ int UTC_minutes = 65;                    // same as above
 int UTC_seconds = 0;                     //
 
 // (hot)water line flush should be scheduled 1-20 minutes before first afternoon watering time (any zone). No need to purge in the AM
-int flushSchedule[]         {6,30};
+int flushSchedule[]         {9,0};
 // watering schedule. Inhibit timers are triggered when Zone watering starts.
-int waterScheduleZone1[]    {7,45,7,50};        // A0   watering times. [h,m,h,m]. Each zone has two watering start times (2x per day)
-int waterScheduleZone2[]    {7,46,7,51};        // A1
-int waterScheduleZone3[]    {7,47,7,52};        // A2
-int waterScheduleZone4[]    {7,48,7,53};        // A3
-int waterScheduleZone5[]    {7,49,7,54};        // A4
+int waterScheduleZone1[]    {9,5,7,50};        // A0   watering times. [h,m,h,m]. Each zone has two watering start times (2x per day)
+int waterScheduleZone2[]    {9,6,7,51};        // A1
+int waterScheduleZone3[]    {9,7,7,52};        // A2
+int waterScheduleZone4[]    {9,8,7,53};        // A3
+int waterScheduleZone5[]    {9,9,7,54};        // A4
 
 bool waterZone1Inhibit    = false;
 bool waterZone2Inhibit    = false;
