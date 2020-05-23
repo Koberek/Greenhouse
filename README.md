@@ -1,6 +1,6 @@
 # Greenhouse
 
-GreenHouse.ino
+Greenhouse.ino
 Functions.ino (tabbed in Arduino IDE)
 
 May 19 2020... 
