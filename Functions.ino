@@ -113,9 +113,9 @@ void controlHouseHeater(void){
 
 void waterPots(void){
     // Water Line purge before second daily watering. First watering doesn't need a flush
-    if (flushinhibit == false){
+    if (INHIBITflush == false){
       if ((UTC_hours == flushSchedule[0]) && (UTC_minutes == flushSchedule[1])){
-        flushinhibit = true;
+        INHIBITflush = true;
         INHIBIT_flush_lastRead_millis = millis();
         digitalWrite(flushPin, ON);
         FLUSH_lastRead_millis = millis();
@@ -128,9 +128,9 @@ void waterPots(void){
       }
     }
     // Check flush inhibit timer
-    if (flushinhibit == true){
+    if (INHIBITflush == true){
       if (timer_lapsed(INHIBIT_flush)){
-        flushinhibit = false;
+        INHIBITflush = false;
       }
     }
 

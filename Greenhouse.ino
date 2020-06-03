@@ -63,17 +63,17 @@ unsigned long PROBE_int         = 60000;
 unsigned long PRINT_int         = 60000;
 
 #define WATER_Zone1 0x03
-unsigned long WATER_Zone1_int   = 60000;           // mSec how long the watering valves are open Zone1
+unsigned long WATER_Zone1_int   = 120000;           // mSec how long the watering valves are open Zone1. Value is modified in waterPots(). Morning and afternoon watering differ
 #define WATER_Zone2 0x04
-unsigned long WATER_Zone2_int   = 60000;           // mSec how long the watering valves are open Zone2
+unsigned long WATER_Zone2_int   = 120000;           // mSec how long the watering valves are open Zone2
 #define WATER_Zone3 0x05
-unsigned long WATER_Zone3_int   = 60000;           // mSec how long the watering valves are open Zone3
+unsigned long WATER_Zone3_int   = 120000;           // mSec how long the watering valves are open Zone3
 #define WATER_Zone4 0x06
-unsigned long WATER_Zone4_int   = 60000;           // mSec how long the watering valves are open Zone4
+unsigned long WATER_Zone4_int   = 180000;           // mSec how long the watering valves are open Zone4
 #define WATER_Zone5 0x07
-unsigned long WATER_Zone5_int   = 60000;           // mSec how long the watering valves are open Zone5
+unsigned long WATER_Zone5_int   = 180000;           // mSec how long the watering valves are open Zone5
 #define INHIBIT_Zone1 0x8
-unsigned long INHIBIT_Zone1_int = 3600000;          // 2 hours insures that the timers do not reset/restart within the watering window
+unsigned long INHIBIT_Zone1_int = 3600000;          // 2 hour INHIBIT. Prevents resetting the timers when the hours and minutes have not advanced
 #define INHIBIT_Zone2 0x09
 unsigned long INHIBIT_Zone2_int = 3600000;
 #define INHIBIT_Zone3 0x0A
@@ -83,7 +83,7 @@ unsigned long INHIBIT_Zone4_int = 3600000;
 #define INHIBIT_Zone5 0x0C
 unsigned long INHIBIT_Zone5_int = 3600000;
 #define FLUSH_water   0x0D
-unsigned long FLUSH_water_int   = 15000;
+unsigned long FLUSH_water_int   = 120000;
 #define INHIBIT_flush 0x0E
 unsigned long INHIBIT_flush_int = 3600000;          // 2 hours
 #define RUNNING     0x0F
@@ -116,19 +116,19 @@ int UTC_minutes = 65;                    // same as above
 int UTC_seconds = 0;                     //
 
 // (hot)water line flush should be scheduled 1-20 minutes before first afternoon watering time (any zone). No need to purge in the AM
-int flushSchedule[]         {9,0};
+int flushSchedule[]         {17,30};
 // watering schedule. Inhibit timers are triggered when Zone watering starts.
-int waterScheduleZone1[]    {9,5,7,50};        // A0   watering times. [h,m,h,m]. Each zone has two watering start times (2x per day)
-int waterScheduleZone2[]    {9,6,7,51};        // A1
-int waterScheduleZone3[]    {9,7,7,52};        // A2
-int waterScheduleZone4[]    {9,8,7,53};        // A3
-int waterScheduleZone5[]    {9,9,7,54};        // A4
+int waterScheduleZone1[]    {11,0,17,35};          // A0   watering times. [h,m,h,m]. Each zone has two watering start times (2x per day)
+int waterScheduleZone2[]    {11,5,17,40};          // A1
+int waterScheduleZone3[]    {11,10,17,45};        // A2
+int waterScheduleZone4[]    {0,0,0,0};            // A3
+int waterScheduleZone5[]    {0,0,0,0};            // A4
 
-bool waterZone1Inhibit    = false;
-bool waterZone2Inhibit    = false;
+bool waterZone1Inhibit    = false;            // if true fully turns off watering for the zone
+bool waterZone2Inhibit    = false;            
 bool waterZone3Inhibit    = false;
-bool waterZone4Inhibit    = false;
-bool waterZone5Inhibit    = false;
+bool waterZone4Inhibit    = true;
+bool waterZone5Inhibit    = true;
 
 bool waterZone1ON         = false;             // true if it is time to water
 bool waterZone2ON         = false;             // true if it is time to water
@@ -144,7 +144,7 @@ bool wateringZone5ON      = false;             // true if watering is active... 
 
 bool endwatering          = false;            // endwatering true when watering time/duration has expired
 bool endinhibit           = false;            // end of watering inhibit
-bool flushinhibit         = false;
+bool INHIBITflush         = false;
 bool endflush             = false;
 
 
